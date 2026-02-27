@@ -1,0 +1,23 @@
+# Build output
+dist/
+
+# Dependencies
+node_modules/
+
+# npm pack output
+*.tgz
+
+# TypeScript incremental
+*.tsbuildinfo
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
