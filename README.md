@@ -110,3 +110,4 @@ Ce node utilise l'API REST v1 de Rocket.Chat. Documentation officielle :
 ## Licence
 
 MIT
+
