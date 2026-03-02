@@ -22,6 +22,7 @@ import {
 
 import { channelOperations, channelFields } from './descriptions/ChannelDescription';
 import { messageOperations, messageFields } from './descriptions/MessageDescription';
+import { dmOperations, dmFields } from './descriptions/DmDescription';
 
 export class RocketChatExtended implements INodeType {
 	description: INodeTypeDescription = {
@@ -44,12 +45,15 @@ export class RocketChatExtended implements INodeType {
 				noDataExpression: true,
 				options: [
 					{ name: 'Channel', value: 'channel' },
+					{ name: 'Direct Message', value: 'directMessage' },
 					{ name: 'Message', value: 'message' },
 				],
 				default: 'channel',
 			},
 			...channelOperations,
 			...channelFields,
+			...dmOperations,
+			...dmFields,
 			...messageOperations,
 			...messageFields,
 		],
@@ -179,6 +183,63 @@ export class RocketChatExtended implements INodeType {
 						const userId = this.getNodeParameter('userId', i) as string;
 						const roleAction = this.getNodeParameter('roleAction', i) as string;
 						responseData = await rocketchatApiRequest.call(this, 'POST', `${prefix}.${roleAction}`, { roomId, userId });
+					}
+				}
+
+				// ======================================
+				//        RESOURCE: DIRECT MESAGE
+				// ========================================
+				else if (resource === 'directMessage') {
+					if (operation === 'create') {
+						const username = this.getNodeParameter('dmUsername', i) as string;
+						const excludeSelf = this.getNodeParameter('excludeSelf', i) as boolean;
+						const body: IDataObject = { excludeSelf };
+						if (username.includes(',')) {
+							body.usernames = username;
+						} else {
+							body.username = username;
+						}
+						responseData = await rocketchatApiRequest.call(this, 'POST', 'dm.create', body);
+					}
+					else if (operation === 'close') {
+						const roomId = this.getNodeParameter('roomId', i) as string;
+						responseData = await rocketchatApiRequest.call(this, 'POST', 'dm.close', { roomId });
+					}
+					else if (operation === 'open') {
+						const roomId = this.getNodeParameter('roomId', i) as string;
+						responseData = await rocketchatApiRequest.call(this, 'POST', 'dm.open', { roomId });
+					}
+					else if (operation === 'send') {
+						const roomId = this.getNodeParameter('roomId', i) as string;
+						const text = this.getNodeParameter('text', i) as string;
+						const additionalFields = this.getNodeParameter('additionalFields', i) as IDataObject;
+						const message: IDataObject = { rid: roomId, msg: text };
+						if (additionalFields.alias) message.alias = additionalFields.alias;
+						if (additionalFields.emoji) message.emoji = additionalFields.emoji;
+						if (additionalFields.tmid) message.tmid = additionalFields.tmid;
+						responseData = await rocketchatApiRequest.call(this, 'POST', 'chat.sendMessage', { message });
+					}
+					else if (operation === 'getMessages') {
+						const roomId = this.getNodeParameter('roomId', i) as string;
+						const returnAll = this.getNodeParameter('returnAll', i) as boolean;
+						const limit = returnAll ? 0 : (this.getNodeParameter('limit', i) as number);
+						responseData = await rocketchatApiRequestAllItems.call(this, 'messages', 'GET', 'dm.messages', {}, { roomId }, limit);
+					}
+					else if (operation === 'getAll') {
+						const returnAll = this.getNodeParameter('returnAll', i) as boolean;
+						const limit = returnAll ? 0 : (this.getNodeParameter('limit', i) as number);
+						responseData = await rocketchatApiRequestAllItems.call(this, 'ims', 'GET', 'dm.list', {}, {}, limit);
+					}
+					else if (operation === 'members') {
+						const roomId = this.getNodeParameter('roomId', i) as string;
+						const returnAll = this.getNodeParameter('returnAll', i) as boolean;
+						const limit = returnAll ? 0 : (this.getNodeParameter('limit', i) as number);
+						responseData = await rocketchatApiRequestAllItems.call(this, 'members', 'GET', 'dm.members', {}, { roomId }, limit);
+					}
+					else if (operation === 'setTopic') {
+						const roomId = this.getNodeParameter('roomId', i) as string;
+						const topic = this.getNodeParameter('topic', i) as string;
+						responseData = await rocketchatApiRequest.call(this, 'POST', 'dm.setTopic', { roomId, topic });
 					}
 				}
 

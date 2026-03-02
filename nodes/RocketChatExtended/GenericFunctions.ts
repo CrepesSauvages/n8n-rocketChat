@@ -157,7 +157,7 @@ export function getChannelEndpoint(channelType: string): string {
 }
 
 /**
- * Upload a file to a Rocket.Chat room (2-step: media upload → confirm).
+ * Upload a file to a Rocket.Chat room via rooms.upload (multipart/form-data).
  */
 export async function rocketchatApiRequestUpload(
 	this: IExecuteFunctions,
@@ -170,30 +170,27 @@ export async function rocketchatApiRequestUpload(
 	const credentials = await this.getCredentials('rocketChatExtendedApi');
 	const serverUrl = (credentials.serverUrl as string).replace(/\/$/, '');
 
-	// Step 1: Upload the file to the database
+	const FormData = await import('form-data').then((m) => m.default || m);
+	const formData = new FormData();
+	formData.append('file', fileBuffer, { filename: fileName, contentType: 'application/octet-stream' });
+	if (description) formData.append('description', description);
+	if (tmid) formData.append('tmid', tmid);
+
 	const uploadOptions: IHttpRequestOptions = {
 		method: 'POST',
-		url: `${serverUrl}/api/v1/rooms.media/${roomId}`,
-		headers: {},
-		body: {
-			file: {
-				value: fileBuffer,
-				options: {
-					filename: fileName,
-					contentType: 'application/octet-stream',
-				},
-			},
+		url: `${serverUrl}/api/v1/rooms.upload/${roomId}`,
+		headers: {
+			...formData.getHeaders(),
+			'X-Auth-Token': credentials.authToken as string,
+			'X-User-Id': credentials.userId as string,
 		},
+		body: formData,
 		json: true,
 	};
 
-	let uploadResponse: IDataObject;
 	try {
-		uploadResponse = await this.helpers.httpRequestWithAuthentication.call(
-			this,
-			'rocketChatExtendedApi',
-			uploadOptions,
-		) as IDataObject;
+		const response = await this.helpers.httpRequest(uploadOptions);
+		return response as IDataObject;
 	} catch (error) {
 		const err = error as { message?: string; statusCode?: number };
 		throw new NodeApiError(this.getNode(), {
@@ -201,22 +198,6 @@ export async function rocketchatApiRequestUpload(
 			status: err.statusCode ?? 0,
 		});
 	}
-
-	const file = uploadResponse.file as IDataObject;
-	if (!file || !file._id) {
-		throw new NodeApiError(this.getNode(), {
-			message: 'File upload succeeded but no file ID was returned.',
-		});
-	}
-
-	// Step 2: Confirm the uploaded file
-	const confirmBody: IDataObject = {
-		fileId: file._id,
-	};
-	if (description) confirmBody.description = description;
-	if (tmid) confirmBody.tmid = tmid;
-
-	return rocketchatApiRequest.call(this, 'POST', `rooms.mediaConfirm/${roomId}`, confirmBody);
 }
 
 // ════════════════════════════════════════════

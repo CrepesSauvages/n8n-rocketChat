@@ -29,6 +29,18 @@ Community node n8n pour des opérations Rocket.Chat avancées : gestion complèt
 ### 💬 Resource: Message
 | Opération | Description |
 |-----------|-------------|
+
+### ✉️ Resource: Direct Message
+| Opération | Description |
+|-----------|-------------|
+| Create | Créer une conversation DM (1-to-1 ou multi-party) |
+| Close | Fermer une conversation DM |
+| Open | Ré-ouvrir une conversation DM fermée |
+| Send | Envoyer un message dans un DM (alias, emoji, thread) |
+| Get Messages | Récupérer les messages d'un DM (paginé) |
+| Get Many | Lister toutes les conversations DM (paginé) |
+| Members | Lister les membres d'un DM room (paginé) |
+| Set Topic | Définir le sujet d'un DM room |
 | Send | Envoyer un message (avec alias, emoji, avatar, attachments) |
 | Edit | Modifier un message existant |
 | Delete | Supprimer un message |
@@ -122,6 +134,11 @@ Ce node utilise l'API REST v1 de Rocket.Chat. Documentation officielle :
 - https://developer.rocket.chat/reference/api/rest-api
 
 ## Changelog
+
+### v0.3.0
+- **Nouvelle resource : Direct Message** — 8 opérations (Create, Close, Open, Send, Get Messages, Get Many, Members, Set Topic)
+- Support DM multi-party (comma-separated usernames)
+- Tests DM (11 tests)
 
 ### v0.2.0
 - **Nouvelles opérations Channel** : Join, Leave, Get Joined
