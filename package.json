@@ -12,13 +12,13 @@
     "messages"
   ],
   "license": "MIT",
-  "homepage": "",
+  "homepage": "https://github.com/CrepesSauvages/n8n-rocketChat#readme",
   "author": {
-    "name": "babou"
+    "name": "CrepesSauvages"
   },
   "repository": {
     "type": "git",
-    "url": ""
+    "url": "https://github.com/CrepesSauvages/n8n-rocketChat.git"
   },
   "main": "dist/nodes/RocketChatExtended/RocketChatExtended.node.js",
   "scripts": {

@@ -47,12 +47,9 @@ Community node n8n pour des opérations Rocket.Chat avancées : gestion complèt
 ### Dans n8n (self-hosted)
 
 ```bash
-# Depuis le dossier d'installation n8n
-cd ~/.n8n
-npm install /chemin/vers/n8n-nodes-rocketchat-extended
-
-# Ou depuis npm (si publié)
-npm install n8n-nodes-rocketchat-extended
+# Depuis GitHub
+npm install --prefix /home/pi/n8n-docker/n8n_data/custom \
+  github:CrepesSauvages/n8n-rocketChat
 ```
 
 Puis redémarrer n8n.
