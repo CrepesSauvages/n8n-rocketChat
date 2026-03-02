@@ -1,10 +1,12 @@
-import {
+import type {
 	ILoadOptionsFunctions,
 	IExecuteFunctions,
 	IDataObject,
 	IHttpRequestMethods,
 	IHttpRequestOptions,
-	INodePropertyOptions,
+	INodePropertyOptions
+} from 'n8n-workflow';
+import {
 	NodeApiError,
 } from 'n8n-workflow';
 
@@ -140,6 +142,7 @@ export async function rocketchatApiRequestAllItems(
 		if (limit > 0 && returnData.length >= limit) {
 			return returnData.slice(0, limit);
 		}
+		// eslint-disable-next-line no-constant-condition
 	} while (true);
 
 	if (limit > 0 && returnData.length > limit) {
@@ -210,8 +213,8 @@ export async function rocketchatApiRequestUpload(
 
 	// Step 2: Confirm the uploaded file with metadata
 	const confirmBody: IDataObject = {};
-	if (description) confirmBody.description = description;
-	if (tmid) confirmBody.tmid = tmid;
+	if (description) { confirmBody.description = description; }
+	if (tmid) { confirmBody.tmid = tmid; }
 
 	return rocketchatApiRequest.call(this, 'POST', `rooms.mediaConfirm/${roomId}/${file._id as string}`, confirmBody);
 }

@@ -1,9 +1,7 @@
 import type {
 	IExecuteFunctions,
 	IDataObject,
-	ILoadOptionsFunctions,
 	INodeExecutionData,
-	INodePropertyOptions,
 	INodeType,
 	INodeTypeDescription,
 } from 'n8n-workflow';
@@ -95,9 +93,9 @@ export class RocketChatExtended implements INodeType {
 						if (additionalFields.members) {
 							body.members = (additionalFields.members as string).split(',').map((m: string) => m.trim());
 						}
-						if (additionalFields.readOnly !== undefined) body.readOnly = additionalFields.readOnly;
-						if (additionalFields.description) body.description = additionalFields.description;
-						if (additionalFields.topic) body.topic = additionalFields.topic;
+						if (additionalFields.readOnly !== undefined) { body.readOnly = additionalFields.readOnly; }
+						if (additionalFields.description) { body.description = additionalFields.description; }
+						if (additionalFields.topic) { body.topic = additionalFields.topic; }
 						responseData = await rocketchatApiRequest.call(this, 'POST', `${prefix}.create`, body);
 					}
 					else if (operation === 'delete') {
@@ -150,7 +148,7 @@ export class RocketChatExtended implements INodeType {
 						const roomId = this.getNodeParameter('roomId', i) as string;
 						const joinCode = this.getNodeParameter('joinCode', i, '') as string;
 						const body: IDataObject = { roomId };
-						if (joinCode) body.joinCode = joinCode;
+						if (joinCode) { body.joinCode = joinCode; }
 						responseData = await rocketchatApiRequest.call(this, 'POST', `${prefix}.join`, body);
 					}
 					else if (operation === 'leave') {
@@ -218,9 +216,9 @@ export class RocketChatExtended implements INodeType {
 						const text = this.getNodeParameter('text', i) as string;
 						const additionalFields = this.getNodeParameter('additionalFields', i) as IDataObject;
 						const message: IDataObject = { rid: roomId, msg: text };
-						if (additionalFields.alias) message.alias = additionalFields.alias;
-						if (additionalFields.emoji) message.emoji = additionalFields.emoji;
-						if (additionalFields.tmid) message.tmid = additionalFields.tmid;
+						if (additionalFields.alias) { message.alias = additionalFields.alias; }
+						if (additionalFields.emoji) { message.emoji = additionalFields.emoji; }
+						if (additionalFields.tmid) { message.tmid = additionalFields.tmid; }
 						responseData = await rocketchatApiRequest.call(this, 'POST', 'chat.sendMessage', { message });
 					}
 					else if (operation === 'getMessages') {
@@ -274,9 +272,9 @@ export class RocketChatExtended implements INodeType {
 						const text = this.getNodeParameter('text', i) as string;
 						const additionalFields = this.getNodeParameter('additionalFields', i) as IDataObject;
 						const message: IDataObject = { rid: roomId, msg: text };
-						if (additionalFields.alias) message.alias = additionalFields.alias;
-						if (additionalFields.emoji) message.emoji = additionalFields.emoji;
-						if (additionalFields.avatar) message.avatar = additionalFields.avatar;
+						if (additionalFields.alias) { message.alias = additionalFields.alias; }
+						if (additionalFields.emoji) { message.emoji = additionalFields.emoji; }
+						if (additionalFields.avatar) { message.avatar = additionalFields.avatar; }
 						if (additionalFields.attachments) {
 							try { message.attachments = JSON.parse(additionalFields.attachments as string); }
 							catch { message.attachments = additionalFields.attachments; }
@@ -360,7 +358,7 @@ export class RocketChatExtended implements INodeType {
 							validateISODate(historyOptions.oldest as string, 'Oldest');
 							qs.oldest = historyOptions.oldest;
 						}
-						if (historyOptions.inclusive !== undefined) qs.inclusive = historyOptions.inclusive;
+						if (historyOptions.inclusive !== undefined) { qs.inclusive = historyOptions.inclusive; }
 						const limit = returnAll ? 0 : (this.getNodeParameter('limit', i) as number);
 						responseData = await rocketchatApiRequestAllItems.call(this, 'messages', 'GET', 'channels.history', {}, qs, limit);
 					}

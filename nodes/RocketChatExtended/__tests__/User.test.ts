@@ -30,8 +30,8 @@ function createUserContext(operation: string, params: Record<string, any> = {}, 
     return {
         getInputData: () => items.map((item: any) => ({ json: item })),
         getNodeParameter: (name: string, _idx: number, fallback?: any) => {
-            if (name in paramMap) return paramMap[name];
-            if (fallback !== undefined) return fallback;
+            if (name in paramMap) {return paramMap[name];}
+            if (fallback !== undefined) {return fallback;}
             return '';
         },
         continueOnFail: () => false,

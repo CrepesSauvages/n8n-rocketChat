@@ -44,14 +44,14 @@ function createMockExecuteFunctions(overrides: {
     return {
         getInputData: () => items.map((item: any) => ({ json: item })),
         getNodeParameter: (name: string, _idx: number, fallback?: any) => {
-            if (name in paramMap) return paramMap[name];
-            if (fallback !== undefined) return fallback;
+            if (name in paramMap) { return paramMap[name]; }
+            if (fallback !== undefined) { return fallback; }
             return '';
         },
         continueOnFail: () => false,
         getNode: () => ({ name: 'TestNode', type: 'test' }),
         helpers: {
-            assertBinaryData: (_idx: number, propertyName: string) => ({
+            assertBinaryData: (_idx: number, _propertyName: string) => ({
                 fileName: 'test.pdf',
                 mimeType: 'application/pdf',
                 data: 'base64data',
