@@ -16,6 +16,7 @@ export const dmOperations: INodeProperties[] = [
             { name: 'Open', value: 'open', description: 'Open or re-open a direct message conversation', action: 'Open a DM' },
             { name: 'Send', value: 'send', description: 'Send a message in a direct message conversation', action: 'Send a DM message' },
             { name: 'Set Topic', value: 'setTopic', description: 'Set the topic for a DM room', action: 'Set DM topic' },
+            { name: 'Upload File', value: 'uploadFile', description: 'Upload a file to a DM room', action: 'Upload a file in DM' },
         ],
         default: 'send',
     },
@@ -77,7 +78,7 @@ export const dmFields: INodeProperties[] = [
         displayOptions: {
             show: {
                 resource: ['directMessage'],
-                operation: ['close', 'open', 'getMessages', 'members', 'send', 'setTopic'],
+                operation: ['close', 'open', 'getMessages', 'members', 'send', 'setTopic', 'uploadFile'],
             },
         },
     },
@@ -120,6 +121,43 @@ export const dmFields: INodeProperties[] = [
         default: '',
         description: 'The topic for the DM room',
         displayOptions: { show: { resource: ['directMessage'], operation: ['setTopic'] } },
+    },
+
+    // ══════════════════════════════════════
+    //  Upload File
+    // ══════════════════════════════════════
+    {
+        displayName: 'Input Data Field Name',
+        name: 'binaryPropertyName',
+        type: 'string',
+        default: 'data',
+        required: true,
+        description: 'The name of the binary field containing the file to be uploaded',
+        displayOptions: { show: { resource: ['directMessage'], operation: ['uploadFile'] } },
+    },
+    {
+        displayName: 'Additional Fields',
+        name: 'uploadAdditionalFields',
+        type: 'collection',
+        placeholder: 'Add Field',
+        default: {},
+        displayOptions: { show: { resource: ['directMessage'], operation: ['uploadFile'] } },
+        options: [
+            {
+                displayName: 'Description',
+                name: 'description',
+                type: 'string',
+                default: '',
+                description: 'The description/message to send along with the file',
+            },
+            {
+                displayName: 'Thread Message ID',
+                name: 'tmid',
+                type: 'string',
+                default: '',
+                description: 'ID of the thread message to reply to',
+            },
+        ],
     },
 
     // ══════════════════════════════════════

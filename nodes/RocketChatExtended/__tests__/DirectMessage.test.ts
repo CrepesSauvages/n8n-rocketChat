@@ -176,4 +176,31 @@ describe('RocketChatExtended — Direct Message', () => {
             'POST', 'dm.setTopic', { roomId: 'dm123', topic: 'Project sync' },
         );
     });
+
+    it('uploadFile — calls rocketchatApiRequestUpload', async () => {
+        const ctx = createDmContext('uploadFile', {
+            roomId: 'dm123',
+            binaryPropertyName: 'data',
+            uploadAdditionalFields: { description: 'test file', tmid: 'thread1' },
+        });
+
+        // Mock binary helpers
+        ctx.helpers = {
+            assertBinaryData: jest.fn().mockReturnValue({ fileName: 'test.png' }),
+            getBinaryDataBuffer: jest.fn().mockResolvedValue(Buffer.from('dummy')),
+        };
+
+        const mockRocketchatApiRequestUpload = jest.requireMock('../GenericFunctions').rocketchatApiRequestUpload;
+        mockRocketchatApiRequestUpload.mockResolvedValue({ success: true });
+
+        await node.execute.call(ctx as any);
+
+        expect(mockRocketchatApiRequestUpload).toHaveBeenCalledWith(
+            'dm123',
+            Buffer.from('dummy'),
+            'test.png',
+            'test file',
+            'thread1'
+        );
+    });
 });

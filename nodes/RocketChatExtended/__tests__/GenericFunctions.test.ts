@@ -226,3 +226,94 @@ describe('rocketchatApiRequestAllItems', () => {
         expect(result).toHaveLength(0);
     });
 });
+
+// ═══════════════════════════════════════════
+//  rocketchatApiRequestUpload (mocked)
+// ═══════════════════════════════════════════
+
+describe('rocketchatApiRequestUpload', () => {
+    const mockCredentials = {
+        serverUrl: 'https://chat.example.com',
+        userId: 'test-user-id',
+        authToken: 'test-auth-token',
+    };
+
+    const createUploadContext = (httpResponse: any, shouldThrow = false) => {
+        const ctx = {
+            getCredentials: jest.fn().mockResolvedValue(mockCredentials),
+            getNode: jest.fn().mockReturnValue({ name: 'TestNode', type: 'test' }),
+            helpers: {
+                httpRequest: jest.fn(),
+                httpRequestWithAuthentication: jest.fn(), // Needed for rocketchatApiRequest mock
+            },
+        };
+
+        if (shouldThrow) {
+            ctx.helpers.httpRequest.mockRejectedValue(httpResponse);
+        } else {
+            ctx.helpers.httpRequest.mockResolvedValue(httpResponse);
+        }
+
+        return ctx;
+    };
+
+    it('uploads file and confirms via 2-step process', async () => {
+        const { rocketchatApiRequestUpload, rocketchatApiRequest } = require('../GenericFunctions');
+        const mockCtx = createUploadContext(JSON.stringify({ file: { _id: 'file123' } }));
+
+        // Mock the internal call to rocketchatApiRequest for the confirm step
+        mockCtx.helpers.httpRequestWithAuthentication.mockResolvedValue({ success: true, message: {} });
+
+        const result = await rocketchatApiRequestUpload.call(
+            mockCtx,
+            'room123',
+            Buffer.from('dummy'),
+            'image.png',
+            'A nice image',
+            'thread123'
+        );
+
+        // Check Step 1: Binary Upload
+        expect(mockCtx.helpers.httpRequest).toHaveBeenCalledTimes(1);
+        const uploadOptions = mockCtx.helpers.httpRequest.mock.calls[0][0];
+        expect(uploadOptions.method).toBe('POST');
+        expect(uploadOptions.url).toBe('https://chat.example.com/api/v1/rooms.media/room123');
+        expect(uploadOptions.headers['X-Auth-Token']).toBe('test-auth-token');
+        expect(uploadOptions.headers['X-User-Id']).toBe('test-user-id');
+
+        // Expect body to be a FormData object
+        expect(uploadOptions.body).toBeDefined();
+        expect(uploadOptions.body.append).toBeDefined();
+
+        // Check Step 2: Confirm metadata
+        expect(mockCtx.helpers.httpRequestWithAuthentication).toHaveBeenCalledTimes(1);
+        const confirmOptionsArgs = mockCtx.helpers.httpRequestWithAuthentication.mock.calls[0];
+        expect(confirmOptionsArgs[0]).toBe('rocketChatExtendedApi');
+        expect(confirmOptionsArgs[1].method).toBe('POST');
+        expect(confirmOptionsArgs[1].url).toBe('https://chat.example.com/api/v1/rooms.mediaConfirm/room123/file123');
+        expect(confirmOptionsArgs[1].body).toEqual({
+            description: 'A nice image',
+            tmid: 'thread123',
+        });
+
+        expect(result).toEqual({ success: true, message: {} });
+    });
+
+    it('throws NodeApiError if upload fails', async () => {
+        const { rocketchatApiRequestUpload } = require('../GenericFunctions');
+        const mockCtx = createUploadContext({ message: 'Upload Failed', statusCode: 500 }, true);
+
+        await expect(rocketchatApiRequestUpload.call(
+            mockCtx, 'room123', Buffer.from('dummy'), 'image.png'
+        )).rejects.toThrow();
+    });
+
+    it('throws NodeApiError if file ID is missing from response', async () => {
+        const { rocketchatApiRequestUpload } = require('../GenericFunctions');
+        const mockCtx = createUploadContext(JSON.stringify({ success: true }));
+
+        await expect(rocketchatApiRequestUpload.call(
+            mockCtx, 'room123', Buffer.from('dummy'), 'image.png'
+        )).rejects.toThrow();
+    });
+});

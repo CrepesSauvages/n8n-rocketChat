@@ -241,6 +241,24 @@ export class RocketChatExtended implements INodeType {
 						const topic = this.getNodeParameter('topic', i) as string;
 						responseData = await rocketchatApiRequest.call(this, 'POST', 'dm.setTopic', { roomId, topic });
 					}
+					else if (operation === 'uploadFile') {
+						const roomId = this.getNodeParameter('roomId', i) as string;
+						const binaryPropertyName = this.getNodeParameter('binaryPropertyName', i) as string;
+						const uploadAdditionalFields = this.getNodeParameter('uploadAdditionalFields', i) as IDataObject;
+
+						const binaryData = this.helpers.assertBinaryData(i, binaryPropertyName);
+						const fileBuffer = await this.helpers.getBinaryDataBuffer(i, binaryPropertyName);
+						const fileName = binaryData.fileName || 'file';
+
+						responseData = await rocketchatApiRequestUpload.call(
+							this,
+							roomId,
+							fileBuffer,
+							fileName,
+							uploadAdditionalFields.description as string | undefined,
+							uploadAdditionalFields.tmid as string | undefined,
+						);
+					}
 				}
 
 				// ========================================
