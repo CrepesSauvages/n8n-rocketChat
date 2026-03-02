@@ -185,12 +185,13 @@ export async function rocketchatApiRequestUpload(
 			'X-User-Id': credentials.userId as string,
 		},
 		body: formData,
-		json: true,
+		returnFullResponse: true,
 	};
 
 	try {
-		const response = await this.helpers.httpRequest(uploadOptions);
-		return response as IDataObject;
+		const raw = await this.helpers.httpRequest(uploadOptions);
+		const parsed = typeof raw === 'string' ? JSON.parse(raw) : (raw.body ? (typeof raw.body === 'string' ? JSON.parse(raw.body) : raw.body) : raw);
+		return parsed as IDataObject;
 	} catch (error) {
 		const err = error as { message?: string; statusCode?: number };
 		throw new NodeApiError(this.getNode(), {
