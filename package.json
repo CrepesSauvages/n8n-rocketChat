@@ -21,7 +21,7 @@
     "url": "https://github.com/CrepesSauvages/n8n-rocketChat.git"
   },
   "publishConfig": {
-    "registry": "https://npm.pkg.github.com"
+    "registry": "https://registry.npmjs.org/"
   },
   "scripts": {
     "build": "tsc && gulp build:icons",
