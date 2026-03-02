@@ -23,6 +23,7 @@ import {
 import { channelOperations, channelFields } from './descriptions/ChannelDescription';
 import { messageOperations, messageFields } from './descriptions/MessageDescription';
 import { dmOperations, dmFields } from './descriptions/DmDescription';
+import { userOperations, userFields } from './descriptions/UserDescription';
 
 export class RocketChatExtended implements INodeType {
 	description: INodeTypeDescription = {
@@ -47,8 +48,9 @@ export class RocketChatExtended implements INodeType {
 					{ name: 'Channel', value: 'channel' },
 					{ name: 'Direct Message', value: 'directMessage' },
 					{ name: 'Message', value: 'message' },
+					{ name: 'User', value: 'user' },
 				],
-				default: 'channel',
+				default: 'message',
 			},
 			...channelOperations,
 			...channelFields,
@@ -56,6 +58,8 @@ export class RocketChatExtended implements INodeType {
 			...dmFields,
 			...messageOperations,
 			...messageFields,
+			...userOperations,
+			...userFields,
 		],
 	};
 
@@ -390,6 +394,55 @@ export class RocketChatExtended implements INodeType {
 							uploadAdditionalFields.description as string | undefined,
 							uploadAdditionalFields.tmid as string | undefined,
 						);
+					}
+				}
+
+				// ========================================
+				//           RESOURCE: USER
+				// ========================================
+				else if (resource === 'user') {
+					if (operation === 'create') {
+						const email = this.getNodeParameter('email', i) as string;
+						const name = this.getNodeParameter('name', i) as string;
+						const password = this.getNodeParameter('password', i) as string;
+						const username = this.getNodeParameter('username', i) as string;
+						const additionalFields = this.getNodeParameter('additionalFields', i) as IDataObject;
+						const body: IDataObject = { email, name, password, username, ...additionalFields };
+
+						if (body.roles) {
+							body.roles = (body.roles as string).split(',').map((role) => role.trim());
+						}
+
+						responseData = await rocketchatApiRequest.call(this, 'POST', 'users.create', body);
+					}
+					else if (operation === 'delete') {
+						const userId = this.getNodeParameter('userId', i) as string;
+						responseData = await rocketchatApiRequest.call(this, 'POST', 'users.delete', { userId });
+					}
+					else if (operation === 'get') {
+						const userId = this.getNodeParameter('userId', i) as string;
+						responseData = await rocketchatApiRequest.call(this, 'GET', 'users.info', {}, { userId });
+					}
+					else if (operation === 'getAll') {
+						const returnAll = this.getNodeParameter('returnAll', i) as boolean;
+						const limit = returnAll ? 0 : (this.getNodeParameter('limit', i) as number);
+						responseData = await rocketchatApiRequestAllItems.call(this, 'users', 'GET', 'users.list', {}, {}, limit);
+					}
+					else if (operation === 'setAvatar') {
+						const userId = this.getNodeParameter('userId', i) as string;
+						const avatarUrl = this.getNodeParameter('avatarUrl', i) as string;
+						responseData = await rocketchatApiRequest.call(this, 'POST', 'users.setAvatar', { userId, avatarUrl });
+					}
+					else if (operation === 'update') {
+						const userId = this.getNodeParameter('userId', i) as string;
+						const updateFields = this.getNodeParameter('updateFields', i) as IDataObject;
+						const body: IDataObject = { userId, data: { ...updateFields } };
+
+						if (updateFields.roles) {
+							(body.data as IDataObject).roles = (updateFields.roles as string).split(',').map((role) => role.trim());
+						}
+
+						responseData = await rocketchatApiRequest.call(this, 'POST', 'users.update', body);
 					}
 				}
 
