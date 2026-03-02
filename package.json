@@ -1,6 +1,6 @@
 {
   "name": "@crepessauvages/n8n-nodes-rocketchat-extended",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "description": "n8n community node for extended Rocket.Chat operations (channels, messages, threads, reactions, and more)",
   "keywords": [
     "n8n-community-node-package",
