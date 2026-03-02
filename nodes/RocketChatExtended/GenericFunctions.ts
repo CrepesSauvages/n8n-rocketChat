@@ -213,7 +213,7 @@ export async function rocketchatApiRequestUpload(
 	if (description) confirmBody.description = description;
 	if (tmid) confirmBody.tmid = tmid;
 
-	return rocketchatApiRequest.call(this, 'POST', `rooms.mediaConfirm/${roomId}`, confirmBody);
+	return rocketchatApiRequest.call(this, 'POST', `rooms.mediaConfirm/${roomId}/${file._id as string}`, confirmBody);
 }
 
 // ════════════════════════════════════════════
