@@ -16,10 +16,13 @@ export const channelOperations: INodeProperties[] = [
 			{ name: 'Create', value: 'create', description: 'Create a new channel', action: 'Create a channel' },
 			{ name: 'Delete', value: 'delete', description: 'Delete a channel', action: 'Delete a channel' },
 			{ name: 'Get', value: 'get', description: 'Get information about a channel', action: 'Get a channel' },
+			{ name: 'Get Joined', value: 'getJoined', description: 'Get channels the user has joined', action: 'Get joined channels' },
 			{ name: 'Get Many', value: 'getAll', description: 'Get many channels', action: 'Get many channels' },
 			{ name: 'Get Members', value: 'getMembers', description: 'Get members of a channel', action: 'Get members of a channel' },
 			{ name: 'Invite', value: 'invite', description: 'Invite a user to a channel', action: 'Invite a user to a channel' },
+			{ name: 'Join', value: 'join', description: 'Join a public channel', action: 'Join a channel' },
 			{ name: 'Kick', value: 'kick', description: 'Remove a user from a channel', action: 'Kick a user from a channel' },
+			{ name: 'Leave', value: 'leave', description: 'Leave a channel', action: 'Leave a channel' },
 			{ name: 'Rename', value: 'rename', description: 'Rename a channel', action: 'Rename a channel' },
 			{ name: 'Set Description', value: 'setDescription', description: 'Set the description of a channel', action: 'Set description of a channel' },
 			{ name: 'Set Read Only', value: 'setReadOnly', description: 'Set a channel as read only', action: 'Set read only on a channel' },
@@ -32,6 +35,7 @@ export const channelOperations: INodeProperties[] = [
 ];
 
 export const channelFields: INodeProperties[] = [
+	// ── Channel Type (shared across all channel ops) ──
 	{
 		displayName: 'Channel Type',
 		name: 'channelType',
@@ -44,7 +48,8 @@ export const channelFields: INodeProperties[] = [
 		description: 'Whether to target a public channel or a private group',
 		displayOptions: { show: { resource: ['channel'] } },
 	},
-	// Create
+
+	// ── Create ──
 	{
 		displayName: 'Channel Name',
 		name: 'name',
@@ -68,7 +73,39 @@ export const channelFields: INodeProperties[] = [
 			{ displayName: 'Topic', name: 'topic', type: 'string', default: '' },
 		],
 	},
-	// Shared Room ID
+
+	// ── Room ID (dynamic dropdown) — used by many ops ──
+	{
+		displayName: 'Specify Room Manually',
+		name: 'specifyRoomManually',
+		type: 'boolean',
+		default: false,
+		description: 'Whether to specify the room ID manually instead of selecting from the list',
+		displayOptions: {
+			show: {
+				resource: ['channel'],
+				operation: ['archive', 'delete', 'invite', 'join', 'kick', 'leave', 'rename', 'setDescription', 'setReadOnly', 'setRole', 'setTopic', 'unarchive', 'getMembers'],
+			},
+		},
+	},
+	{
+		displayName: 'Room',
+		name: 'roomId',
+		type: 'options',
+		typeOptions: {
+			loadOptionsMethod: 'getChannels',
+		},
+		required: true,
+		default: '',
+		description: 'Select the channel from the list. Choose from the list, or switch to manual mode to enter the ID.',
+		displayOptions: {
+			show: {
+				resource: ['channel'],
+				operation: ['archive', 'delete', 'invite', 'join', 'kick', 'leave', 'rename', 'setDescription', 'setReadOnly', 'setRole', 'setTopic', 'unarchive', 'getMembers'],
+				specifyRoomManually: [false],
+			},
+		},
+	},
 	{
 		displayName: 'Room ID',
 		name: 'roomId',
@@ -79,11 +116,23 @@ export const channelFields: INodeProperties[] = [
 		displayOptions: {
 			show: {
 				resource: ['channel'],
-				operation: ['archive', 'delete', 'invite', 'kick', 'rename', 'setDescription', 'setReadOnly', 'setRole', 'setTopic', 'unarchive', 'getMembers'],
+				operation: ['archive', 'delete', 'invite', 'join', 'kick', 'leave', 'rename', 'setDescription', 'setReadOnly', 'setRole', 'setTopic', 'unarchive', 'getMembers'],
+				specifyRoomManually: [true],
 			},
 		},
 	},
-	// Get
+
+	// ── Join — additional fields ──
+	{
+		displayName: 'Join Code',
+		name: 'joinCode',
+		type: 'string',
+		default: '',
+		description: 'The join code if the channel requires one',
+		displayOptions: { show: { resource: ['channel'], operation: ['join'] } },
+	},
+
+	// ── Get (by ID or Name) ──
 	{
 		displayName: 'Identify By',
 		name: 'identifyBy',
@@ -111,12 +160,13 @@ export const channelFields: INodeProperties[] = [
 		default: '',
 		displayOptions: { show: { resource: ['channel'], operation: ['get'], identifyBy: ['roomName'] } },
 	},
-	// Pagination
+
+	// ── Pagination (Get Many, Get Members, Get Joined) ──
 	{
 		displayName: 'Return All',
 		name: 'returnAll',
 		type: 'boolean',
-		displayOptions: { show: { resource: ['channel'], operation: ['getAll', 'getMembers'] } },
+		displayOptions: { show: { resource: ['channel'], operation: ['getAll', 'getMembers', 'getJoined'] } },
 		default: false,
 		description: 'Whether to return all results or only up to a given limit',
 	},
@@ -124,12 +174,33 @@ export const channelFields: INodeProperties[] = [
 		displayName: 'Limit',
 		name: 'limit',
 		type: 'number',
-		displayOptions: { show: { resource: ['channel'], operation: ['getAll', 'getMembers'], returnAll: [false] } },
+		displayOptions: { show: { resource: ['channel'], operation: ['getAll', 'getMembers', 'getJoined'], returnAll: [false] } },
 		typeOptions: { minValue: 1, maxValue: 500 },
 		default: 50,
 		description: 'Max number of results to return',
 	},
-	// Invite / Kick / Set Role
+
+	// ── User ID (dynamic dropdown) — Invite, Kick, Set Role ──
+	{
+		displayName: 'Specify User Manually',
+		name: 'specifyUserManually',
+		type: 'boolean',
+		default: false,
+		description: 'Whether to specify the user ID manually instead of selecting from the list',
+		displayOptions: { show: { resource: ['channel'], operation: ['invite', 'kick', 'setRole'] } },
+	},
+	{
+		displayName: 'User',
+		name: 'userId',
+		type: 'options',
+		typeOptions: {
+			loadOptionsMethod: 'getUsers',
+		},
+		required: true,
+		default: '',
+		description: 'Select the user from the list. Choose from the list, or switch to manual mode to enter the ID.',
+		displayOptions: { show: { resource: ['channel'], operation: ['invite', 'kick', 'setRole'], specifyUserManually: [false] } },
+	},
 	{
 		displayName: 'User ID',
 		name: 'userId',
@@ -137,9 +208,10 @@ export const channelFields: INodeProperties[] = [
 		required: true,
 		default: '',
 		description: 'The ID of the user',
-		displayOptions: { show: { resource: ['channel'], operation: ['invite', 'kick', 'setRole'] } },
+		displayOptions: { show: { resource: ['channel'], operation: ['invite', 'kick', 'setRole'], specifyUserManually: [true] } },
 	},
-	// Rename
+
+	// ── Rename ──
 	{
 		displayName: 'New Name',
 		name: 'newName',
@@ -148,7 +220,8 @@ export const channelFields: INodeProperties[] = [
 		default: '',
 		displayOptions: { show: { resource: ['channel'], operation: ['rename'] } },
 	},
-	// Set Description
+
+	// ── Set Description ──
 	{
 		displayName: 'Description',
 		name: 'description',
@@ -157,7 +230,8 @@ export const channelFields: INodeProperties[] = [
 		default: '',
 		displayOptions: { show: { resource: ['channel'], operation: ['setDescription'] } },
 	},
-	// Set Read Only
+
+	// ── Set Read Only ──
 	{
 		displayName: 'Read Only',
 		name: 'readOnly',
@@ -166,7 +240,8 @@ export const channelFields: INodeProperties[] = [
 		default: true,
 		displayOptions: { show: { resource: ['channel'], operation: ['setReadOnly'] } },
 	},
-	// Set Role
+
+	// ── Set Role ──
 	{
 		displayName: 'Role Action',
 		name: 'roleAction',
@@ -180,7 +255,8 @@ export const channelFields: INodeProperties[] = [
 		default: 'addModerator',
 		displayOptions: { show: { resource: ['channel'], operation: ['setRole'] } },
 	},
-	// Set Topic
+
+	// ── Set Topic ──
 	{
 		displayName: 'Topic',
 		name: 'topic',

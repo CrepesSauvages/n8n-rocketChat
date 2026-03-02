@@ -215,3 +215,77 @@ n8n-nodes-rocketchat-extended/
 13. Tests et validation
 14. Documentation README
 15. Build et packaging npm
+
+---
+
+## 13. v0.2.0 — Nouvelles opérations Channel
+
+| Opération | Endpoint API | Méthode | Paramètres principaux |
+|-----------|-------------|---------|----------------------|
+| Join | `/channels.join` | POST | roomId, joinCode? |
+| Leave | `/channels.leave` | POST | roomId |
+| Get Joined | `/channels.list.joined` | GET | (paginé) |
+
+### Notes :
+- **Join** : champ optionnel `joinCode` pour les channels protégés
+- **Get Joined** : switch vers `groups.listAll` si Type = Private Group
+- Tous switchent vers `groups.*` si Type = Private Group
+
+---
+
+## 14. v0.2.0 — Nouvelles opérations Message
+
+| Opération | Endpoint API | Méthode | Paramètres principaux |
+|-----------|-------------|---------|----------------------|
+| Get | `/chat.getMessage` | GET | msgId |
+| Upload File | `/rooms.media/{rid}` + `/rooms.mediaConfirm/{rid}` | POST | roomId, file (binary), description?, tmid? |
+| Follow | `/chat.followMessage` | POST | mid |
+| Unfollow | `/chat.unfollowMessage` | POST | mid |
+| Report | `/chat.reportMessage` | POST | messageId, description |
+
+### Notes :
+- **Upload File** : processus en 2 étapes (upload → confirm). Accepte les données binaires n8n (connecter un "Read Binary File" en amont).
+- **Follow / Unfollow** : 2 opérations séparées (cohérent avec Pin/Unpin, Star/Unstar)
+- **Report** : champ `description` pour la raison du signalement
+
+---
+
+## 15. v0.2.0 — Améliorations UX
+
+### Dropdowns dynamiques (`loadOptions`)
+- **getChannels** : `GET /channels.list` → liste déroulante des rooms
+- **getUsers** : `GET /users.list` → liste déroulante des utilisateurs
+- **getJoinedChannels** : `GET /channels.list.joined` → liste des channels rejoints
+- Toggle "Specify Manually" pour fallback en saisie d'ID libre
+
+### Erreurs enrichies
+Mapping des codes d'erreur RC courants vers des messages lisibles :
+- `error-not-allowed` → "Permission denied"
+- `error-invalid-room` → "Invalid room"
+- `error-action-not-allowed` → "Action restricted"
+- `error-user-not-found` → "User not found"
+- etc. (10 codes mappés)
+
+### Validation des inputs
+- **Emoji** : auto-correction du format `:name:` (ajout des colons si manquants)
+- **Dates ISO** : validation avant appel API sur Schedule et Get History
+
+---
+
+## 16. v0.2.0 — Decision Log (suite)
+
+| # | Décision | Alternatives considérées | Raison |
+|---|----------|--------------------------|--------|
+| 9 | **Toggle "Specify ID Manually"** pour les dropdowns | Dropdown pur sans fallback | Si permissions limitées, l'utilisateur peut saisir l'ID manuellement |
+| 10 | **Upload en 2 étapes** (`rooms.media` + `mediaConfirm`) | `rooms.upload` (deprecated) | Endpoint moderne, recommandé par RC |
+| 11 | **Follow/Unfollow = 2 opérations séparées** | Toggle dans une seule opération | Cohérent avec Pin/Unpin et Star/Unstar |
+| 12 | **Validation côté node** (emoji, dates) | Laisser l'API rejeter | Meilleure UX, erreurs claires avant appel réseau |
+| 13 | **loadOptions dans GenericFunctions** | Inline dans le node | Réutilisable, cohérent avec l'architecture existante |
+
+---
+
+## 17. CI/CD
+
+- **GitHub Actions** : workflow `node.js.yml` sur push/PR vers `master`
+- **Matrices** : Node.js 18.x, 20.x, 22.x
+- **Steps** : `npm ci` → `npm run build` → `npm test`

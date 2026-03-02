@@ -4,8 +4,55 @@ import {
 	IDataObject,
 	IHttpRequestMethods,
 	IHttpRequestOptions,
+	INodePropertyOptions,
 	NodeApiError,
 } from 'n8n-workflow';
+
+// ─── Error code mapping for enriched error messages ───
+const RC_ERROR_MAP: Record<string, string> = {
+	'error-not-allowed': 'Permission denied — you do not have the required role for this action.',
+	'error-invalid-room': 'Invalid room — the room ID does not exist or you do not have access.',
+	'error-action-not-allowed': 'Action not allowed — this operation is restricted by server policy.',
+	'error-room-not-found': 'Room not found — verify the room ID or name.',
+	'error-user-not-found': 'User not found — verify the user ID or username.',
+	'error-invalid-message': 'Invalid message — the message ID does not exist.',
+	'error-message-deleting-blocked': 'Message deletion is blocked by server configuration.',
+	'error-pinning-message': 'Pinning failed — pinning may be disabled for this channel.',
+	'error-not-authorized': 'Not authorized — your auth token may be expired or invalid.',
+	'totp-required': 'Two-factor authentication is required for this action.',
+};
+
+/**
+ * Enrich a Rocket.Chat error with a human-readable description.
+ */
+function enrichErrorMessage(errorBody: IDataObject): string {
+	const errorType = (errorBody.errorType || errorBody.error) as string;
+	if (errorType && RC_ERROR_MAP[errorType]) {
+		return `${RC_ERROR_MAP[errorType]} (RC code: ${errorType})`;
+	}
+	return (errorBody.message || errorBody.error || 'Rocket.Chat API request failed') as string;
+}
+
+/**
+ * Validate emoji format (:name:).
+ */
+export function validateEmoji(emoji: string): string {
+	const trimmed = emoji.trim();
+	if (!trimmed.startsWith(':') || !trimmed.endsWith(':')) {
+		return `:${trimmed.replace(/^:/, '').replace(/:$/, '')}:`;
+	}
+	return trimmed;
+}
+
+/**
+ * Validate ISO date string.
+ */
+export function validateISODate(dateStr: string, fieldName: string): void {
+	const parsed = Date.parse(dateStr);
+	if (isNaN(parsed)) {
+		throw new Error(`Invalid date format for "${fieldName}". Expected ISO 8601 (e.g. 2026-01-01T00:00:00.000Z), got: "${dateStr}"`);
+	}
+}
 
 /**
  * Make an authenticated API request to Rocket.Chat REST API v1.
@@ -43,9 +90,13 @@ export async function rocketchatApiRequest(
 		);
 		return response as IDataObject;
 	} catch (error) {
-		const err = error as { message?: string; statusCode?: number };
+		const err = error as { message?: string; statusCode?: number; body?: IDataObject; description?: string };
+		const errorBody = (err.body || {}) as IDataObject;
+		const enriched = enrichErrorMessage(errorBody);
+
 		throw new NodeApiError(this.getNode(), {
-			message: err.message || 'Rocket.Chat API request failed',
+			message: enriched,
+			description: err.description || enriched,
 			status: err.statusCode ?? 0,
 		});
 	}
@@ -53,13 +104,6 @@ export async function rocketchatApiRequest(
 
 /**
  * Make an authenticated API request and return all items (handles pagination).
- *
- * @param propertyName - The key in the response that contains the array of results (e.g. 'channels', 'messages')
- * @param method - HTTP method
- * @param endpoint - API endpoint (without /api/v1/ prefix)
- * @param body - Request body for POST/PUT
- * @param qs - Query string parameters
- * @param limit - Maximum number of items to return (0 = all)
  */
 export async function rocketchatApiRequestAllItems(
 	this: IExecuteFunctions | ILoadOptionsFunctions,
@@ -107,8 +151,107 @@ export async function rocketchatApiRequestAllItems(
 
 /**
  * Resolve the correct API endpoint prefix based on channel type.
- * Public channels use 'channels.*', private groups use 'groups.*'.
  */
 export function getChannelEndpoint(channelType: string): string {
 	return channelType === 'group' ? 'groups' : 'channels';
+}
+
+/**
+ * Upload a file to a Rocket.Chat room (2-step: media upload → confirm).
+ */
+export async function rocketchatApiRequestUpload(
+	this: IExecuteFunctions,
+	roomId: string,
+	fileBuffer: Buffer,
+	fileName: string,
+	description?: string,
+	tmid?: string,
+): Promise<IDataObject> {
+	const credentials = await this.getCredentials('rocketChatExtendedApi');
+	const serverUrl = (credentials.serverUrl as string).replace(/\/$/, '');
+
+	// Step 1: Upload the file to the database
+	const uploadOptions: IHttpRequestOptions = {
+		method: 'POST',
+		url: `${serverUrl}/api/v1/rooms.media/${roomId}`,
+		headers: {},
+		body: {
+			file: {
+				value: fileBuffer,
+				options: {
+					filename: fileName,
+					contentType: 'application/octet-stream',
+				},
+			},
+		},
+		json: true,
+	};
+
+	let uploadResponse: IDataObject;
+	try {
+		uploadResponse = await this.helpers.httpRequestWithAuthentication.call(
+			this,
+			'rocketChatExtendedApi',
+			uploadOptions,
+		) as IDataObject;
+	} catch (error) {
+		const err = error as { message?: string; statusCode?: number };
+		throw new NodeApiError(this.getNode(), {
+			message: `File upload failed: ${err.message || 'Unknown error'}`,
+			status: err.statusCode ?? 0,
+		});
+	}
+
+	const file = uploadResponse.file as IDataObject;
+	if (!file || !file._id) {
+		throw new NodeApiError(this.getNode(), {
+			message: 'File upload succeeded but no file ID was returned.',
+		});
+	}
+
+	// Step 2: Confirm the uploaded file
+	const confirmBody: IDataObject = {
+		fileId: file._id,
+	};
+	if (description) confirmBody.description = description;
+	if (tmid) confirmBody.tmid = tmid;
+
+	return rocketchatApiRequest.call(this, 'POST', `rooms.mediaConfirm/${roomId}`, confirmBody);
+}
+
+// ════════════════════════════════════════════
+//  loadOptions methods (used by the node)
+// ════════════════════════════════════════════
+
+/**
+ * Fetch all public channels for a dynamic dropdown.
+ */
+export async function getChannels(this: ILoadOptionsFunctions): Promise<INodePropertyOptions[]> {
+	const data = await rocketchatApiRequestAllItems.call(this, 'channels', 'GET', 'channels.list');
+	return data.map((ch) => ({
+		name: (ch.name || ch._id) as string,
+		value: ch._id as string,
+	}));
+}
+
+/**
+ * Fetch all joined channels for a dynamic dropdown.
+ */
+export async function getJoinedChannels(this: ILoadOptionsFunctions): Promise<INodePropertyOptions[]> {
+	const data = await rocketchatApiRequestAllItems.call(this, 'channels', 'GET', 'channels.list.joined');
+	return data.map((ch) => ({
+		name: (ch.name || ch._id) as string,
+		value: ch._id as string,
+	}));
+}
+
+/**
+ * Fetch all users for a dynamic dropdown.
+ */
+export async function getUsers(this: ILoadOptionsFunctions): Promise<INodePropertyOptions[]> {
+	const data = await rocketchatApiRequestAllItems.call(this, 'users', 'GET', 'users.list');
+	return data.map((u) => ({
+		name: (`${u.username || ''} (${u.name || ''})` as string).trim(),
+		value: u._id as string,
+	}));
 }
