@@ -1,3 +1,6 @@
+# npm auth (contains token - never commit)
+.npmrc
+
 # Build output
 dist/
 

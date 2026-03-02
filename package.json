@@ -1,5 +1,5 @@
 {
-  "name": "n8n-nodes-rocketchat-extended",
+  "name": "@crepessauvages/n8n-nodes-rocketchat-extended",
   "version": "0.2.0",
   "description": "n8n community node for extended Rocket.Chat operations (channels, messages, threads, reactions, and more)",
   "keywords": [
@@ -20,7 +20,9 @@
     "type": "git",
     "url": "https://github.com/CrepesSauvages/n8n-rocketChat.git"
   },
-  "main": "dist/nodes/RocketChatExtended/RocketChatExtended.node.js",
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
+  },
   "scripts": {
     "build": "tsc && gulp build:icons",
     "dev": "tsc --watch",
