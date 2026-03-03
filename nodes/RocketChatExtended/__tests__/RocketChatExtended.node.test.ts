@@ -194,6 +194,20 @@ describe('RocketChatExtended — Channel', () => {
             'POST', 'channels.addModerator', { roomId: 'room123', userId: 'user456' },
         );
     });
+
+    it('setAnnouncement — sends POST with roomId and announcement', async () => {
+        const ctx = createMockExecuteFunctions({
+            resource: 'channel',
+            operation: 'setAnnouncement',
+            params: { roomId: 'room123', announcement: 'Breaking news!' },
+        });
+
+        await node.execute.call(ctx as any);
+
+        expect(mockRocketchatApiRequest).toHaveBeenCalledWith(
+            'POST', 'channels.setAnnouncement', { roomId: 'room123', announcement: 'Breaking news!' }
+        );
+    });
 });
 
 // ═══════════════════════════════════════════

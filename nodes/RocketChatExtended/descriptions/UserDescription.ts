@@ -17,6 +17,8 @@ export const userOperations: INodeProperties[] = [
             { name: 'Delete', value: 'delete', description: 'Delete a user', action: 'Delete a user' },
             { name: 'Get', value: 'get', description: 'Get a user by ID or Username', action: 'Get a user' },
             { name: 'Get Many', value: 'getAll', description: 'Get many users', action: 'Get many users' },
+            { name: 'Get Presence', value: 'getPresence', description: 'Get the online presence of a user', action: 'Get user presence' },
+            { name: 'Set Status', value: 'setStatus', description: 'Set user presence status', action: 'Set user status' },
             { name: 'Update', value: 'update', description: 'Update a user\'s properties', action: 'Update a user' },
         ],
         default: 'create',
@@ -89,7 +91,7 @@ export const userFields: INodeProperties[] = [
         name: 'specifyUserManually',
         type: 'boolean',
         default: false,
-        displayOptions: { show: { resource: ['user'], operation: ['delete', 'get', 'setAvatar', 'update'] } },
+        displayOptions: { show: { resource: ['user'], operation: ['delete', 'get', 'getPresence', 'setAvatar', 'update'] } },
     },
     {
         displayName: 'User',
@@ -98,7 +100,7 @@ export const userFields: INodeProperties[] = [
         typeOptions: { loadOptionsMethod: 'getUsers' },
         required: true,
         default: '',
-        displayOptions: { show: { resource: ['user'], operation: ['delete', 'get', 'setAvatar', 'update'], specifyUserManually: [false] } },
+        displayOptions: { show: { resource: ['user'], operation: ['delete', 'get', 'getPresence', 'setAvatar', 'update'], specifyUserManually: [false] } },
     },
     {
         displayName: 'User ID',
@@ -106,7 +108,7 @@ export const userFields: INodeProperties[] = [
         type: 'string',
         required: true,
         default: '',
-        displayOptions: { show: { resource: ['user'], operation: ['delete', 'get', 'setAvatar', 'update'], specifyUserManually: [true] } },
+        displayOptions: { show: { resource: ['user'], operation: ['delete', 'get', 'getPresence', 'setAvatar', 'update'], specifyUserManually: [true] } },
     },
 
     // ══════════════════════════════════════
@@ -129,6 +131,31 @@ export const userFields: INodeProperties[] = [
             { displayName: 'Username', name: 'username', type: 'string', default: '' },
             { displayName: 'Verified', name: 'verified', type: 'boolean', default: false },
         ],
+    },
+
+    // ══════════════════════════════════════
+    //  Set Status
+    // ══════════════════════════════════════
+    {
+        displayName: 'Message',
+        name: 'message',
+        type: 'string',
+        default: '',
+        description: 'The status text to display',
+        displayOptions: { show: { resource: ['user'], operation: ['setStatus'] } },
+    },
+    {
+        displayName: 'Status',
+        name: 'status',
+        type: 'options',
+        options: [
+            { name: 'Online', value: 'online' },
+            { name: 'Away', value: 'away' },
+            { name: 'Busy', value: 'busy' },
+            { name: 'Offline', value: 'offline' },
+        ],
+        default: 'online',
+        displayOptions: { show: { resource: ['user'], operation: ['setStatus'] } },
     },
 
     // ══════════════════════════════════════

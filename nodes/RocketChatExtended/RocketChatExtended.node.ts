@@ -160,6 +160,11 @@ export class RocketChatExtended implements INodeType {
 						const topic = this.getNodeParameter('topic', i) as string;
 						responseData = await rocketchatApiRequest.call(this, 'POST', `${prefix}.setTopic`, { roomId, topic });
 					}
+					else if (operation === 'setAnnouncement') {
+						const roomId = this.getNodeParameter('roomId', i) as string;
+						const announcement = this.getNodeParameter('announcement', i) as string;
+						responseData = await rocketchatApiRequest.call(this, 'POST', `${prefix}.setAnnouncement`, { roomId, announcement });
+					}
 					else if (operation === 'setDescription') {
 						const roomId = this.getNodeParameter('roomId', i) as string;
 						const description = this.getNodeParameter('description', i) as string;
@@ -425,6 +430,15 @@ export class RocketChatExtended implements INodeType {
 						const returnAll = this.getNodeParameter('returnAll', i) as boolean;
 						const limit = returnAll ? 0 : (this.getNodeParameter('limit', i) as number);
 						responseData = await rocketchatApiRequestAllItems.call(this, 'users', 'GET', 'users.list', {}, {}, limit);
+					}
+					else if (operation === 'getPresence') {
+						const userId = this.getNodeParameter('userId', i) as string;
+						responseData = await rocketchatApiRequest.call(this, 'GET', 'users.getPresence', {}, { userId });
+					}
+					else if (operation === 'setStatus') {
+						const message = this.getNodeParameter('message', i) as string;
+						const status = this.getNodeParameter('status', i) as string;
+						responseData = await rocketchatApiRequest.call(this, 'POST', 'users.setStatus', { message, status });
 					}
 					else if (operation === 'setAvatar') {
 						const userId = this.getNodeParameter('userId', i) as string;

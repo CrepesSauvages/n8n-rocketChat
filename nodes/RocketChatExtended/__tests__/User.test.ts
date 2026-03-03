@@ -30,8 +30,8 @@ function createUserContext(operation: string, params: Record<string, any> = {}, 
     return {
         getInputData: () => items.map((item: any) => ({ json: item })),
         getNodeParameter: (name: string, _idx: number, fallback?: any) => {
-            if (name in paramMap) {return paramMap[name];}
-            if (fallback !== undefined) {return fallback;}
+            if (name in paramMap) { return paramMap[name]; }
+            if (fallback !== undefined) { return fallback; }
             return '';
         },
         continueOnFail: () => false,
@@ -124,6 +124,16 @@ describe('RocketChatExtended — User', () => {
         expect(result[0]).toHaveLength(2);
     });
 
+    it('getPresence — uses GET with userId', async () => {
+        const ctx = createUserContext('getPresence', { userId: 'u123' });
+
+        await node.execute.call(ctx as any);
+
+        expect(mockRocketchatApiRequest).toHaveBeenCalledWith(
+            'GET', 'users.getPresence', {}, { userId: 'u123' },
+        );
+    });
+
     it('setAvatar — uses POST with userId and avatarUrl', async () => {
         const ctx = createUserContext('setAvatar', { userId: 'u123', avatarUrl: 'https://example.com/avatar.png' });
 
@@ -131,6 +141,16 @@ describe('RocketChatExtended — User', () => {
 
         expect(mockRocketchatApiRequest).toHaveBeenCalledWith(
             'POST', 'users.setAvatar', { userId: 'u123', avatarUrl: 'https://example.com/avatar.png' },
+        );
+    });
+
+    it('setStatus — uses POST with message and status', async () => {
+        const ctx = createUserContext('setStatus', { message: 'Out to lunch', status: 'away' });
+
+        await node.execute.call(ctx as any);
+
+        expect(mockRocketchatApiRequest).toHaveBeenCalledWith(
+            'POST', 'users.setStatus', { message: 'Out to lunch', status: 'away' },
         );
     });
 

@@ -24,6 +24,7 @@ export const channelOperations: INodeProperties[] = [
 			{ name: 'Kick', value: 'kick', description: 'Remove a user from a channel', action: 'Kick a user from a channel' },
 			{ name: 'Leave', value: 'leave', description: 'Leave a channel', action: 'Leave a channel' },
 			{ name: 'Rename', value: 'rename', description: 'Rename a channel', action: 'Rename a channel' },
+			{ name: 'Set Announcement', value: 'setAnnouncement', description: 'Set the announcement of a channel', action: 'Set announcement of a channel' },
 			{ name: 'Set Description', value: 'setDescription', description: 'Set the description of a channel', action: 'Set description of a channel' },
 			{ name: 'Set Read Only', value: 'setReadOnly', description: 'Set a channel as read only', action: 'Set read only on a channel' },
 			{ name: 'Set Role', value: 'setRole', description: 'Set the role of a user in a channel', action: 'Set role of a user in a channel' },
@@ -84,7 +85,7 @@ export const channelFields: INodeProperties[] = [
 		displayOptions: {
 			show: {
 				resource: ['channel'],
-				operation: ['archive', 'delete', 'invite', 'join', 'kick', 'leave', 'rename', 'setDescription', 'setReadOnly', 'setRole', 'setTopic', 'unarchive', 'getMembers'],
+				operation: ['archive', 'delete', 'invite', 'join', 'kick', 'leave', 'rename', 'setAnnouncement', 'setDescription', 'setReadOnly', 'setRole', 'setTopic', 'unarchive', 'getMembers'],
 			},
 		},
 	},
@@ -101,7 +102,7 @@ export const channelFields: INodeProperties[] = [
 		displayOptions: {
 			show: {
 				resource: ['channel'],
-				operation: ['archive', 'delete', 'invite', 'join', 'kick', 'leave', 'rename', 'setDescription', 'setReadOnly', 'setRole', 'setTopic', 'unarchive', 'getMembers'],
+				operation: ['archive', 'delete', 'invite', 'join', 'kick', 'leave', 'rename', 'setAnnouncement', 'setDescription', 'setReadOnly', 'setRole', 'setTopic', 'unarchive', 'getMembers'],
 				specifyRoomManually: [false],
 			},
 		},
@@ -116,7 +117,7 @@ export const channelFields: INodeProperties[] = [
 		displayOptions: {
 			show: {
 				resource: ['channel'],
-				operation: ['archive', 'delete', 'invite', 'join', 'kick', 'leave', 'rename', 'setDescription', 'setReadOnly', 'setRole', 'setTopic', 'unarchive', 'getMembers'],
+				operation: ['archive', 'delete', 'invite', 'join', 'kick', 'leave', 'rename', 'setAnnouncement', 'setDescription', 'setReadOnly', 'setRole', 'setTopic', 'unarchive', 'getMembers'],
 				specifyRoomManually: [true],
 			},
 		},
@@ -219,6 +220,16 @@ export const channelFields: INodeProperties[] = [
 		required: true,
 		default: '',
 		displayOptions: { show: { resource: ['channel'], operation: ['rename'] } },
+	},
+
+	// ── Set Announcement ──
+	{
+		displayName: 'Announcement',
+		name: 'announcement',
+		type: 'string',
+		required: true,
+		default: '',
+		displayOptions: { show: { resource: ['channel'], operation: ['setAnnouncement'] } },
 	},
 
 	// ── Set Description ──
